@@ -7,37 +7,47 @@ namespace StateMachine
 
     public interface IStateMachineBuilder<TState>
     {
+        string Name { get; }
         IServiceCollection Services { get; }
-        IStateMachineBuilder<TState> AddStep<TStep>(ServiceLifetime lifetime = ServiceLifetime.Scoped) where TStep : IStateMachineStep<TState>;
-        IStateMachineBuilder<TState> AddStep<TStep>(TStep step) where TStep : IStateMachineStep<TState>;
+        IStateMachineBuilder<TState> AddStep<TImplementation>(ServiceLifetime lifetime = ServiceLifetime.Scoped) where TImplementation : IStateMachineStep<TState>;
+        IStateMachineBuilder<TState> AddStep<TImplementation>(TImplementation step) where TImplementation : class, IStateMachineStep<TState>;
     }
 
     internal class StateMachineBuilder<TState> : IStateMachineBuilder<TState>
     {
-        public StateMachineBuilder(IServiceCollection services)
+        public StateMachineBuilder(IServiceCollection services, string name)
         {
             Services = services;
+            Name = name;
         }
 
         public IServiceCollection Services { get; }
+        public string Name { get; }
 
         public IStateMachineBuilder<TState> AddStep<TImplementation>(ServiceLifetime lifetime = ServiceLifetime.Scoped) where TImplementation : IStateMachineStep<TState>
         {
-            Services.Add(ServiceDescriptor.Describe(typeof(IStateMachineStep<TState>), typeof(TState), lifetime));
+            Services.Add(ServiceDescriptor.Describe(typeof(TImplementation), typeof(TImplementation), lifetime));
+
+            AddStep<TImplementation>();
 
             return this;
         }
 
-        public IStateMachineBuilder<TState> AddStep<TImplementation>(TImplementation step) where TImplementation : IStateMachineStep<TState>
+        public IStateMachineBuilder<TState> AddStep<TImplementation>(TImplementation step) where TImplementation : class, IStateMachineStep<TState>
         {
-            Services.AddSingleton<IStateMachineStep<TState>>(step);
+            Services.AddSingleton(step);
+
+            AddStep<TImplementation>();
 
             return this;
         }
+
+        private void AddStep<TImplementation>() => Services.Configure<StateMachineOptions<TState>>(Name, o => o.AddStep<TImplementation>());
     }
 
     public interface IStateMachineBuilder<TStep, TState>
     {
+        string Name { get; }
         IServiceCollection Services { get; }
         IStateMachineBuilder<TStep, TState> AddStep<TImplementation>(ServiceLifetime lifetime = ServiceLifetime.Scoped) where TImplementation : IStateMachineStep<TState>;
         IStateMachineBuilder<TStep, TState> AddStep<TImplementation>(TImplementation step) where TImplementation : IStateMachineStep<TStep, TState>;
@@ -45,16 +55,20 @@ namespace StateMachine
 
     public class StateMachineBuilder<TStep, TState> : IStateMachineBuilder<TStep, TState>
     {
-        public StateMachineBuilder(IServiceCollection services)
+        public StateMachineBuilder(IServiceCollection services, string name)
         {
             Services = services;
+            Name = name;
         }
 
         public IServiceCollection Services { get; }
+        public string Name { get; }
 
         public IStateMachineBuilder<TStep, TState> AddStep<TImplementation>(ServiceLifetime lifetime = ServiceLifetime.Scoped) where TImplementation : IStateMachineStep<TState>
         {
             Services.Add(ServiceDescriptor.Describe(typeof(IStateMachineStep<TStep, TState>), typeof(TState), lifetime));
+
+            AddStep<TImplementation>();
 
             return this;
         }
@@ -63,7 +77,27 @@ namespace StateMachine
         {
             Services.AddSingleton<IStateMachineStep<TStep, TState>>(step);
 
+            AddStep<TImplementation>();
+
             return this;
         }
+
+        private void AddStep<TImplementation>() => Services.Configure<StateMachineOptions<TStep, TState>>(Name, o => o.AddStep<TImplementation>());
+    }
+
+    public class StateMachineOptions<TState>
+    {
+        private readonly List<Type> _steps = new List<Type>();
+
+        public IReadOnlyCollection<Type> Steps { get; set; }
+
+        public void AddStep<TStep>()
+        {
+            _steps.Add(typeof(TState));
+        }
+    }
+
+    public class StateMachineOptions<TStep, TState> : StateMachineOptions<TState>
+    {
     }
 }
