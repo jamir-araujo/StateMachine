@@ -1,14 +1,15 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading;
+using System.Threading.Tasks;
 
-namespace StateMachine
+namespace StateMachines
 {
-    public interface IStateMachineStep<TState>
+    public interface IStateMachineStep<TData>
     {
-        Task<bool> ProcessAsync(TState state);
+        Task<bool> ExecuteAsync(TData data, CancellationToken cancellationToken = default);
     }
 
-    public interface IStateMachineStep<TStep, TState> : IStateMachineStep<TState>
+    public interface IStateMachineStep<TState, TData> : IStateMachineStep<TData>
     {
-        TStep Step { get; }
+        TState State { get; }
     }
 }

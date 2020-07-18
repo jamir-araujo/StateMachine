@@ -1,67 +1,66 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Options;
 
-namespace StateMachine
+namespace StateMachines
 {
     public interface IStateMachineFactory<TState>
     {
-        IStateMachine<TState> Crate(string name, TState state);
+        IStateMachine<TState> Create(string name, TState state);
     }
 
-    public class StateMachineFactory<TState> : IStateMachineFactory<TState>
+    public class StateMachineFactory<TData> : IStateMachineFactory<TData>
     {
         private readonly IServiceProvider _serviceProvider;
-        private readonly IOptionsMonitor<StateMachineOptions<TState>> _optionsMonitor;
+        private readonly IOptionsMonitor<StateMachineOptions<TData>> _optionsMonitor;
 
         public StateMachineFactory(
             IServiceProvider serviceProvider,
-            IOptionsMonitor<StateMachineOptions<TState>> optionsMonitor)
+            IOptionsMonitor<StateMachineOptions<TData>> optionsMonitor)
         {
             _serviceProvider = serviceProvider;
             _optionsMonitor = optionsMonitor;
         }
 
-        public IStateMachine<TState> Crate(string name, TState state)
+        public IStateMachine<TData> Create(string name, TData data)
         {
             var options = _optionsMonitor.Get(name);
 
             var steps = options.Steps
                 .Select(stepType => _serviceProvider.GetService(stepType))
-                .Cast<IStateMachineStep<TState>>();
+                .Cast<IStateMachineStep<TData>>();
 
-            return new StateMachine<TState>(steps, state);
+            return new StateMachine<TData>(steps, data);
         }
     }
 
-    public interface IStateMachineFactory<TStep, TState>
+    public interface IStateMachineFactory<TState, TData>
     {
-        IStateMachine<TStep, TState> Crate(string name, TStep step, TState state);
+        IStateMachine<TState, TData> Create(string name, TState step, TData data);
     }
 
-    public class StateMachineFactory<TStep, TState> : IStateMachineFactory<TStep, TState>
+    public class StateMachineFactory<TState, TData> : IStateMachineFactory<TState, TData>
     {
         private readonly IServiceProvider _serviceProvider;
-        private readonly IOptionsMonitor<StateMachineOptions<TStep, TState>> _optionsMonitor;
+        private readonly IOptionsMonitor<StateMachineOptions<TState, TData>> _optionsMonitor;
 
         public StateMachineFactory(
             IServiceProvider serviceProvider,
-            IOptionsMonitor<StateMachineOptions<TStep, TState>> optionsMonitor)
+            IOptionsMonitor<StateMachineOptions<TState, TData>> optionsMonitor)
         {
             _serviceProvider = serviceProvider;
             _optionsMonitor = optionsMonitor;
         }
 
-        public IStateMachine<TStep, TState> Crate(string name, TStep step, TState state)
+        public IStateMachine<TState, TData> Create(string name, TState state, TData data)
         {
             var options = _optionsMonitor.Get(name);
 
             var steps = options.Steps
                 .Select(stepType => _serviceProvider.GetService(stepType))
-                .Cast<IStateMachineStep<TStep, TState>>();
+                .Cast<IStateMachineStep<TState, TData>>();
 
-            return new StateMachine<TStep, TState>(steps, step, state);
+            return new StateMachine<TState, TData>(steps, state, data);
         }
     }
 }

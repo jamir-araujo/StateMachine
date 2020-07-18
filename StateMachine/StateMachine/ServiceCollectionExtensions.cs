@@ -1,17 +1,53 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using StateMachines;
 
-namespace StateMachine
+namespace Microsoft.Extensions.DependencyInjection
 {
     public static class ServiceCollectionExtensions
     {
-        public static IStateMachineBuilder<TState> AddStateMachine<TState>(this IServiceCollection service)
+        public static IServiceCollection AddStateMachines(this IServiceCollection services)
         {
-            return new StateMachineBuilder<TState>(service);
+            services.TryAddScoped(typeof(IStateMachineFactory<>), typeof(StateMachineFactory<>));
+            services.TryAddScoped(typeof(IStateMachineFactory<,>), typeof(StateMachineFactory<,>));
+
+            return services;
         }
 
-        public static IStateMachineBuilder<TStep, TState> AddStateMachine<TStep, TState>(this IServiceCollection service)
+        public static IServiceCollection AddStateMachine<TState>(this IServiceCollection service, Action<IStateMachineBuilder<TState>> configure)
         {
-            return new StateMachineBuilder<TStep, TState>(service);
+            service.AddStateMachines();
+
+            configure(new StateMachineBuilder<TState>(service, string.Empty));
+
+            return service;
+        }
+
+        public static IServiceCollection AddStateMachine<TState>(this IServiceCollection service, string name, Action<IStateMachineBuilder<TState>> configure)
+        {
+            service.AddStateMachines();
+
+            configure(new StateMachineBuilder<TState>(service, name));
+
+            return service;
+        }
+
+        public static IServiceCollection AddStateMachine<TStep, TState>(this IServiceCollection service, Action<IStateMachineBuilder<TStep, TState>> configure)
+        {
+            service.AddStateMachines();
+
+            configure(new StateMachineBuilder<TStep, TState>(service, string.Empty));
+
+            return service;
+        }
+
+        public static IServiceCollection AddStateMachine<TStep, TState>(this IServiceCollection service, string name, Action<IStateMachineBuilder<TStep, TState>> configure)
+        {
+            service.AddStateMachines();
+
+            configure(new StateMachineBuilder<TStep, TState>(service, name));
+
+            return service;
         }
     }
 }

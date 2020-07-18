@@ -1,79 +1,109 @@
-﻿using System.Collections;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 
-namespace StateMachine
+namespace StateMachines
 {
-    public interface IStateMachine<TState>
+    public interface IStateMachine<TData>
     {
-        TState State { get; }
-        Task<bool> MoveNextAsync();
+        TData Data { get; }
+        Task<bool> MoveNextAsync(CancellationToken cancellationToken = default);
     }
 
-    public class StateMachine<TState> : IStateMachine<TState>
+    public class StateMachine<TData> : IStateMachine<TData>
     {
-        private readonly List<IStateMachineStep<TState>> _steps;
-        private int _step;
+        private readonly IEnumerator<IStateMachineStep<TData>> _steps;
 
-        public StateMachine(IEnumerable<IStateMachineStep<TState>> steps, TState state)
+        public StateMachine(IEnumerable<IStateMachineStep<TData>> steps, TData state)
         {
-            State = state;
+            Data = state;
 
-            _steps = steps.ToList();
-            _step = 0;
+            _steps = steps.GetEnumerator();
         }
 
-        public TState State { get; }
+        public TData Data { get; }
 
-        public async Task<bool> MoveNextAsync()
+        public async Task<bool> MoveNextAsync(CancellationToken cancellationToken = default)
         {
-            if (await _steps[_step].ProcessAsync(State))
+            while (_steps.MoveNext())
             {
-                _step += 1;
-
-                return true;
+                return await _steps.Current.ExecuteAsync(Data, cancellationToken);
             }
 
             return false;
         }
     }
 
-    public interface IStateMachine<TStep, TState> : IStateMachine<TState>
+    public interface IStateMachine<TState, TData> : IStateMachine<TData>
     {
-        TStep Step { get; }
+        TState State { get; }
     }
 
-    public class StateMachine<TStep, TState> : IStateMachine<TStep, TState>
+    public class StateMachine<TState, TData> : IStateMachine<TState, TData>
     {
-        public StateMachine(IEnumerable<IStateMachineStep<TStep, TState>> steps, TStep step, TState state)
+        public StateMachine(IEnumerable<IStateMachineStep<TState, TData>> steps, TState step, TData data)
         {
-            Step = step;
-            State = state;
+            State = step;
+            Data = data;
 
             _steps = steps.GetEnumerator();
         }
 
-        public TStep Step { get; private set; }
-        public TState State { get; }
+        public TState State { get; private set; }
+        public TData Data { get; }
 
-        private IEnumerator<IStateMachineStep<TStep, TState>> _steps;
+        private readonly IEnumerator<IStateMachineStep<TState, TData>> _steps;
 
-        public async Task<bool> MoveNextAsync()
+        public async Task<bool> MoveNextAsync(CancellationToken cancellationToken = default)
         {
-            do
+            if (TryMoveToState())
             {
-                if (_steps.Current.Step.Equals(Step))
+                if (await _steps.Current.ExecuteAsync(Data))
                 {
-                    if (await _steps.Current.ProcessAsync(State))
+                    if (_steps.MoveNext())
                     {
-                        return _steps.MoveNext();
+                        State = _steps.Current.State;
+                        return true;
                     }
                 }
-            } while (_steps.MoveNext());
+            }
 
             return false;
+        }
+
+        private bool TryMoveToState()
+        {
+            if (_steps.Current == null)
+            {
+                if (!_steps.MoveNext())
+                {
+                    return false;
+                }
+            }
+
+            do
+            {
+                if (_steps.Current.State.Equals(State))
+                {
+                    return true;
+                }
+            }
+            while (_steps.MoveNext());
+
+            return false;
+        }
+
+        class FinalStep : IStateMachineStep<TState, TData>
+        {
+            public TState State => default;
+
+            public Task<bool> ExecuteAsync(TData data, CancellationToken cancellationToken = default)
+            {
+                return Task.FromResult(false);
+            }
         }
     }
 }
