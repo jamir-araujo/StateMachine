@@ -20,7 +20,7 @@ namespace StateMachines.IntegratedTests
 
             var provider = services.BuildServiceProvider();
 
-            var factory = provider.GetService<IStateMachineFactory<DummyState>>();
+            var factory = provider.GetService<IStateMachineFactory>();
 
             var stateMachine = factory.Create(string.Empty, new DummyState());
 

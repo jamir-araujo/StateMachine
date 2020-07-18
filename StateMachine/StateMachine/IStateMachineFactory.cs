@@ -1,30 +1,31 @@
 ﻿using System;
 using System.Linq;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace StateMachines
 {
-    public interface IStateMachineFactory<TState>
+    public interface IStateMachineFactory
     {
-        IStateMachine<TState> Create(string name, TState state);
+        IStateMachine<TState> Create<TState>(string name, TState state);
+        IStateMachine<TState, TData> Create<TState, TData>(string name, TState step, TData data);
     }
 
-    public class StateMachineFactory<TData> : IStateMachineFactory<TData>
+    public class StateMachineFactory : IStateMachineFactory
     {
         private readonly IServiceProvider _serviceProvider;
-        private readonly IOptionsMonitor<StateMachineOptions<TData>> _optionsMonitor;
 
-        public StateMachineFactory(
-            IServiceProvider serviceProvider,
-            IOptionsMonitor<StateMachineOptions<TData>> optionsMonitor)
+        public StateMachineFactory(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
-            _optionsMonitor = optionsMonitor;
         }
 
-        public IStateMachine<TData> Create(string name, TData data)
+        public IStateMachine<TData> Create<TData>(string name, TData data)
         {
-            var options = _optionsMonitor.Get(name);
+            var optionsMonitor = _serviceProvider
+                .GetRequiredService<IOptionsMonitor<StateMachineOptions<TData>>>();
+
+            var options = optionsMonitor.Get(name);
 
             var steps = options.Steps
                 .Select(stepType => _serviceProvider.GetService(stepType))
@@ -32,29 +33,13 @@ namespace StateMachines
 
             return new StateMachine<TData>(steps, data);
         }
-    }
 
-    public interface IStateMachineFactory<TState, TData>
-    {
-        IStateMachine<TState, TData> Create(string name, TState step, TData data);
-    }
-
-    public class StateMachineFactory<TState, TData> : IStateMachineFactory<TState, TData>
-    {
-        private readonly IServiceProvider _serviceProvider;
-        private readonly IOptionsMonitor<StateMachineOptions<TState, TData>> _optionsMonitor;
-
-        public StateMachineFactory(
-            IServiceProvider serviceProvider,
-            IOptionsMonitor<StateMachineOptions<TState, TData>> optionsMonitor)
+        public IStateMachine<TState, TData> Create<TState, TData>(string name, TState state, TData data)
         {
-            _serviceProvider = serviceProvider;
-            _optionsMonitor = optionsMonitor;
-        }
+            var optionsMonitor = _serviceProvider
+                .GetRequiredService<IOptionsMonitor<StateMachineOptions<TState, TData>>>();
 
-        public IStateMachine<TState, TData> Create(string name, TState state, TData data)
-        {
-            var options = _optionsMonitor.Get(name);
+            var options = optionsMonitor.Get(name);
 
             var steps = options.Steps
                 .Select(stepType => _serviceProvider.GetService(stepType))

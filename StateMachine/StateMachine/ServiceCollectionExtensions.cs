@@ -8,8 +8,7 @@ namespace Microsoft.Extensions.DependencyInjection
     {
         public static IServiceCollection AddStateMachines(this IServiceCollection services)
         {
-            services.TryAddScoped(typeof(IStateMachineFactory<>), typeof(StateMachineFactory<>));
-            services.TryAddScoped(typeof(IStateMachineFactory<,>), typeof(StateMachineFactory<,>));
+            services.TryAddScoped<IStateMachineFactory, StateMachineFactory>();
 
             return services;
         }
