@@ -130,6 +130,7 @@ namespace StateMachines.Tests
 
             Assert.True(await machine.MoveNextAsync());
             Assert.True(await machine.MoveNextAsync());
+            Assert.True(await machine.MoveNextAsync());
             Assert.False(await machine.MoveNextAsync());
 
             //finished
@@ -167,6 +168,7 @@ namespace StateMachines.Tests
 
             Assert.True(await newMachine.MoveNextAsync());
             Assert.True(await newMachine.MoveNextAsync());
+            Assert.True(await newMachine.MoveNextAsync());
             Assert.False(await newMachine.MoveNextAsync());
 
             Assert.False(await newMachine.MoveNextAsync());
@@ -189,6 +191,7 @@ namespace StateMachines.Tests
 
             var machine = new StateMachine<int, DummyData>(steps, 0, data);
 
+            Assert.True(await machine.MoveNextAsync());
             Assert.True(await machine.MoveNextAsync());
             Assert.True(await machine.MoveNextAsync());
             Assert.True(await machine.MoveNextAsync());

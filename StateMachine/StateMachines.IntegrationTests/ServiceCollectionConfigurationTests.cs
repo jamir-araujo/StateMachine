@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+
 using Xunit;
 
 namespace StateMachines.IntegratedTests
@@ -9,25 +12,27 @@ namespace StateMachines.IntegratedTests
     public class ServiceCollectionConfigurationTests
     {
         [Fact]
-        public async Task AddStateMachineAsync()
+        public async Task AddStateMachine_Should_Provider()
         {
-            var services = new ServiceCollection();
+            var host = Host.CreateDefaultBuilder()
+                .ConfigureServices(services =>
+                {
+                    services.AddStateMachine<DummyState>(stateMachine =>
+                    {
+                        stateMachine.AddStep<CounterStep>();
+                    });
+                })
+                .Build();
 
-            services.AddStateMachine<DummyState>(stateMachine =>
-            {
-                stateMachine.AddStep<CounterStep>();
-            });
+            var factory = host.Services.GetService<IStateMachineFactory>();
 
-            var provider = services.BuildServiceProvider();
+            var state = new DummyState();
+            var stateMachine = factory.Create(string.Empty, state);
 
-            var factory = provider.GetService<IStateMachineFactory>();
-
-            var stateMachine = factory.Create(string.Empty, new DummyState());
-
-            while (await stateMachine.MoveNextAsync())
-            {
-
-            }
+            Assert.True(await stateMachine.MoveNextAsync());
+            Assert.False(await stateMachine.MoveNextAsync());
+            Assert.False(await stateMachine.MoveNextAsync());
+            Assert.Equal(1, state.StepCount);
         }
 
         public class DummyState

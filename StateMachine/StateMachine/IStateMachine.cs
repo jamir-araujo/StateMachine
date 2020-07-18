@@ -1,40 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace StateMachines
 {
+
     public interface IStateMachine<TData>
     {
         TData Data { get; }
         Task<bool> MoveNextAsync(CancellationToken cancellationToken = default);
-    }
-
-    public class StateMachine<TData> : IStateMachine<TData>
-    {
-        private readonly IEnumerator<IStateMachineStep<TData>> _steps;
-
-        public StateMachine(IEnumerable<IStateMachineStep<TData>> steps, TData state)
-        {
-            Data = state;
-
-            _steps = steps.GetEnumerator();
-        }
-
-        public TData Data { get; }
-
-        public async Task<bool> MoveNextAsync(CancellationToken cancellationToken = default)
-        {
-            while (_steps.MoveNext())
-            {
-                return await _steps.Current.ExecuteAsync(Data, cancellationToken);
-            }
-
-            return false;
-        }
     }
 
     public interface IStateMachine<TState, TData> : IStateMachine<TData>
@@ -66,8 +41,9 @@ namespace StateMachines
                     if (_steps.MoveNext())
                     {
                         State = _steps.Current.State;
-                        return true;
                     }
+
+                    return true;
                 }
             }
 
@@ -94,16 +70,6 @@ namespace StateMachines
             while (_steps.MoveNext());
 
             return false;
-        }
-
-        class FinalStep : IStateMachineStep<TState, TData>
-        {
-            public TState State => default;
-
-            public Task<bool> ExecuteAsync(TData data, CancellationToken cancellationToken = default)
-            {
-                return Task.FromResult(false);
-            }
         }
     }
 }

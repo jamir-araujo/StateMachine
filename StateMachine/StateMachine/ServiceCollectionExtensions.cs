@@ -13,20 +13,20 @@ namespace Microsoft.Extensions.DependencyInjection
             return services;
         }
 
-        public static IServiceCollection AddStateMachine<TState>(this IServiceCollection service, Action<IStateMachineBuilder<TState>> configure)
+        public static IServiceCollection AddStateMachine<TState>(this IServiceCollection service, Action<IStateMachineBuilder<int, TState>> configure)
         {
             service.AddStateMachines();
 
-            configure(new StateMachineBuilder<TState>(service, string.Empty));
+            configure(new StateMachineBuilder<int, TState>(service, string.Empty));
 
             return service;
         }
 
-        public static IServiceCollection AddStateMachine<TState>(this IServiceCollection service, string name, Action<IStateMachineBuilder<TState>> configure)
+        public static IServiceCollection AddStateMachine<TState>(this IServiceCollection service, string name, Action<IStateMachineBuilder<int, TState>> configure)
         {
             service.AddStateMachines();
 
-            configure(new StateMachineBuilder<TState>(service, name));
+            configure(new StateMachineBuilder<int, TState>(service, name));
 
             return service;
         }
