@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -7,7 +8,7 @@ namespace StateMachines
 {
     public interface IStateMachineFactory
     {
-        IStateMachine<TState> Create<TState>(string name, TState state);
+        IStateMachine<int, TState> Create<TState>(string name, TState state);
         IStateMachine<TState, TData> Create<TState, TData>(string name, TState state, TData data);
     }
 
@@ -20,7 +21,7 @@ namespace StateMachines
             _serviceProvider = serviceProvider;
         }
 
-        public IStateMachine<TData> Create<TData>(string name, TData data)
+        public IStateMachine<int, TData> Create<TData>(string name, TData data)
         {
             var optionsMonitor = _serviceProvider
                 .GetRequiredService<IOptionsMonitor<StateMachineOptions<int, TData>>>();
@@ -30,7 +31,9 @@ namespace StateMachines
             var steps = options.Steps
                 .Select(stepType => _serviceProvider.GetRequiredService(stepType))
                 .Cast<IStateMachineStep<TData>>()
-                .Select((step, i) => new WrapperStep<TData>(step, i));
+                .Select((step, i) => new IntegerStateWrapper<TData>(step, i))
+                .Cast<IStateMachineStep<int, TData>>()
+                .Concat(new[] { new FinishingStep<int, TData>(options.Steps.Count) });
 
             return new StateMachine<int, TData>(steps, 0, data);
         }

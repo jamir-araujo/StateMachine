@@ -13,11 +13,11 @@ namespace StateMachines
         TState State { get; }
     }
 
-    internal class WrapperStep<TData> : IStateMachineStep<int, TData>
+    internal class IntegerStateWrapper<TData> : IStateMachineStep<int, TData>
     {
         private readonly IStateMachineStep<TData> _step;
 
-        public WrapperStep(IStateMachineStep<TData> step, int state)
+        public IntegerStateWrapper(IStateMachineStep<TData> step, int state)
         {
             State = state;
 
@@ -29,6 +29,21 @@ namespace StateMachines
         public Task<bool> ExecuteAsync(TData data, CancellationToken cancellationToken = default)
         {
             return _step.ExecuteAsync(data, cancellationToken);
+        }
+    }
+
+    internal class FinishingStep<TState, TData> : IStateMachineStep<TState, TData>
+    {
+        public FinishingStep(TState state)
+        {
+            State = state;
+        }
+
+        public TState State { get; }
+
+        public Task<bool> ExecuteAsync(TData data, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(false);
         }
     }
 }
