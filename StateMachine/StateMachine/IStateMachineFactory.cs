@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -8,7 +8,8 @@ namespace StateMachines
 {
     public interface IStateMachineFactory
     {
-        IStateMachine<int, TState> Create<TState>(string name, TState state);
+        IStateMachine<int, TData> Create<TData>(string name, TData data);
+        IStateMachine<int, TData> Create<TData>(string name, int state, TData data);
         IStateMachine<TState, TData> Create<TState, TData>(string name, TState state, TData data);
     }
 
@@ -23,6 +24,11 @@ namespace StateMachines
 
         public IStateMachine<int, TData> Create<TData>(string name, TData data)
         {
+            return Create(name, 0, data);
+        }
+
+        public IStateMachine<int, TData> Create<TData>(string name, int state, TData data)
+        {
             var optionsMonitor = _serviceProvider
                 .GetRequiredService<IOptionsMonitor<StateMachineOptions<int, TData>>>();
 
@@ -30,12 +36,11 @@ namespace StateMachines
 
             var steps = options.Steps
                 .Select(stepType => _serviceProvider.GetRequiredService(stepType))
-                .Cast<IStateMachineStep<TData>>()
-                .Select((step, i) => new IntegerStateWrapper<TData>(step, i))
-                .Cast<IStateMachineStep<int, TData>>()
-                .Concat(new[] { new FinishingStep<int, TData>(options.Steps.Count) });
+                .Cast<IStateMachineStep<TData>>();
 
-            return new StateMachine<int, TData>(steps, 0, data);
+            return StateMachineBuilder.Create<TData>()
+                .AddSteps(steps)
+                .Build(state, data);
         }
 
         public IStateMachine<TState, TData> Create<TState, TData>(string name, TState state, TData data)
@@ -46,10 +51,13 @@ namespace StateMachines
             var options = optionsMonitor.Get(name);
 
             var steps = options.Steps
-                .Select(stepType => _serviceProvider.GetService(stepType))
+                .Select(stepType => _serviceProvider.GetRequiredService(stepType))
                 .Cast<IStateMachineStep<TState, TData>>();
 
-            return new StateMachine<TState, TData>(steps, state, data);
+            return StateMachineBuilder.Create<TState, TData>()
+                .AddSteps(steps)
+                .SetEndState(options.EndState)
+                .Build(state, data);
         }
     }
 }

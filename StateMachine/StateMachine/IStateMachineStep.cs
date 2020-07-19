@@ -13,11 +13,11 @@ namespace StateMachines
         TState State { get; }
     }
 
-    internal class IntegerStateWrapper<TData> : IStateMachineStep<int, TData>
+    internal class IntegerStateStepWrapper<TData> : IStateMachineStep<int, TData>
     {
         private readonly IStateMachineStep<TData> _step;
 
-        public IntegerStateWrapper(IStateMachineStep<TData> step, int state)
+        public IntegerStateStepWrapper(IStateMachineStep<TData> step, int state)
         {
             State = state;
 
@@ -32,9 +32,9 @@ namespace StateMachines
         }
     }
 
-    internal class FinishingStep<TState, TData> : IStateMachineStep<TState, TData>
+    internal class EndStateStep<TState, TData> : IStateMachineStep<TState, TData>
     {
-        public FinishingStep(TState state)
+        public EndStateStep(TState state)
         {
             State = state;
         }

@@ -14,9 +14,9 @@ namespace StateMachines
 
     public class StateMachine<TState, TData> : IStateMachine<TState, TData>
     {
-        public StateMachine(IEnumerable<IStateMachineStep<TState, TData>> steps, TState step, TData data)
+        public StateMachine(IEnumerable<IStateMachineStep<TState, TData>> steps, TState state, TData data)
         {
-            State = step;
+            State = state;
             Data = data;
 
             _steps = steps.GetEnumerator();
