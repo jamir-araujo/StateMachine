@@ -10,7 +10,7 @@ namespace Microsoft.Extensions.DependencyInjection
         IServiceCollection Services { get; }
         IStateMachineBuilder<TState, TData> AddStep<TImplementation>(ServiceLifetime lifetime = ServiceLifetime.Scoped) where TImplementation : class, IStateMachineStep<TData>;
         IStateMachineBuilder<TState, TData> AddStep<TImplementation>(TImplementation step) where TImplementation : class, IStateMachineStep<TState, TData>;
-        IStateMachineBuilder<TState, TData> EndState(TState state);
+        IStateMachineBuilder<TState, TData> SetEndState(TState state);
     }
 
     public class StateMachineBuilder<TState, TData> : IStateMachineBuilder<TState, TData>
@@ -42,9 +42,9 @@ namespace Microsoft.Extensions.DependencyInjection
             return this;
         }
 
-        public IStateMachineBuilder<TState, TData> EndState(TState state)
+        public IStateMachineBuilder<TState, TData> SetEndState(TState state)
         {
-            SetEndState(state);
+            Services.Configure<StateMachineOptions<TState, TData>>(Name, o => o.EndState = state);
 
             return this;
         }
@@ -52,11 +52,6 @@ namespace Microsoft.Extensions.DependencyInjection
         private void AddStep<TImplementation>()
         {
             Services.Configure<StateMachineOptions<TState, TData>>(Name, o => o.AddStep<TImplementation>());
-        }
-
-        private void SetEndState(TState endState)
-        {
-            Services.Configure<StateMachineOptions<TState, TData>>(Name, o => o.EndState = endState);
         }
     }
 }

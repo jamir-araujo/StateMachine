@@ -1,20 +1,22 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+
+using StateMachines.Exceptions;
 
 namespace StateMachines
 {
-    public interface IStateMachineBuilderAddStep<TState, TData> : IStateMachineBuilderEndState<TState, TData>
+    public interface IStateMachineBuilderStepAdder<TState, TData> : IStateMachineBuilderEndState<TState, TData>
     {
-        IStateMachineBuilderAddStep<TState, TData> AddStep<TStep>(TStep step) where TStep : class, IStateMachineStep<TState, TData>;
-        IStateMachineBuilderAddStep<TState, TData> AddSteps<TStep>(IEnumerable<TStep> steps) where TStep : class, IStateMachineStep<TState, TData>;
+        IStateMachineBuilderStepAdder<TState, TData> AddStep<TStep>(TStep step) where TStep : class, IStateMachineStep<TState, TData>;
+        IStateMachineBuilderStepAdder<TState, TData> AddSteps<TStep>(IEnumerable<TStep> steps) where TStep : class, IStateMachineStep<TState, TData>;
     }
 
-    public interface IStateMachineBuilderAddStep<TData> : IStateMachineBuilder<int, TData>
+    public interface IStateMachineBuilderStepAdder<TData> : IStateMachineBuilder<TData>
     {
-        IStateMachineBuilderAddStep<TData> AddStep<TStep>(TStep step) where TStep : class, IStateMachineStep<TData>;
-        IStateMachineBuilderAddStep<TData> AddSteps<TStep>(IEnumerable<TStep> steps) where TStep : class, IStateMachineStep<TData>;
-        IStateMachine<int, TData> Build(TData data);
-
+        IStateMachineBuilderStepAdder<TData> AddStep<TStep>(TStep step) where TStep : class, IStateMachineStep<TData>;
+        IStateMachineBuilderStepAdder<TData> AddSteps<TStep>(IEnumerable<TStep> steps) where TStep : class, IStateMachineStep<TData>;
+        IStateMachineBuilder<TData> SetEndState(int state);
     }
 
     public interface IStateMachineBuilderEndState<TState, TData>
@@ -27,80 +29,114 @@ namespace StateMachines
         IStateMachine<TState, TData> Build(TState state, TData data);
     }
 
+    public interface IStateMachineBuilder<TData> : IStateMachineBuilder<int, TData>
+    {
+        IStateMachine<int, TData> Build(TData data);
+    }
+
     public class StateMachineBuilder
     {
-        public static IStateMachineBuilderAddStep<TState, TData> Create<TState, TData>()
+        public static IStateMachineBuilderStepAdder<TState, TData> Create<TState, TData>()
         {
             return new StateMachineBuilder<TState, TData>();
         }
 
-        public static IStateMachineBuilderAddStep<TData> Create<TData>()
+        public static IStateMachineBuilderStepAdder<TData> Create<TData>()
         {
             return new StateMachineBuilder<TData>();
         }
     }
 
-    public class StateMachineBuilder<TData> : IStateMachineBuilder<int, TData>, IStateMachineBuilderAddStep<TData>
+    internal class StateMachineBuilder<TData> :
+        StateMachineBuilder<int, TData>,
+        IStateMachineBuilder<TData>,
+        IStateMachineBuilderStepAdder<TData>
     {
-        private readonly List<IStateMachineStep<TData>> _steps = new List<IStateMachineStep<TData>>();
-
-        public IStateMachineBuilderAddStep<TData> AddStep<TStep>(TStep step) where TStep : class, IStateMachineStep<TData>
-        {
-            _steps.Add(step);
-
-            return this;
-        }
-
-        public IStateMachineBuilderAddStep<TData> AddSteps<TStep>(IEnumerable<TStep> steps) where TStep : class, IStateMachineStep<TData>
-        {
-            _steps.AddRange(steps);
-
-            return this;
-        }
-
         public IStateMachine<int, TData> Build(TData data)
         {
             return Build(0, data);
         }
 
-        public IStateMachine<int, TData> Build(int state, TData data)
+        public override IStateMachine<int, TData> Build(int state, TData data)
         {
-            var steps = _steps.Select((s, i) => new IntegerStateStepWrapper<TData>(s, i))
-                .Cast<IStateMachineStep<int, TData>>()
-                .Concat(new[] { new EndStateStep<int, TData>(_steps.Count) });
+            if (!Steps.Any())
+            {
+                throw new MissingStepException();
+            }
 
-            return new StateMachine<int, TData>(steps, state, data);
+            if (!Steps.OfType<EndStateStep<int, TData>>().Any())
+            {
+                Steps.Add(new EndStateStep<int, TData>(Steps.Count));
+            }
+
+            return new StateMachine<int, TData>(Steps, state, data);
+        }
+
+        IStateMachineBuilderStepAdder<TData> IStateMachineBuilderStepAdder<TData>.AddStep<TStep>(TStep step)
+        {
+            Steps.Add(new IntegerStateStepWrapper<TData>(step, Steps.Count));
+
+            return this;
+        }
+
+        IStateMachineBuilderStepAdder<TData> IStateMachineBuilderStepAdder<TData>.AddSteps<TStep>(IEnumerable<TStep> steps)
+        {
+            foreach (var step in steps)
+            {
+                Steps.Add(new IntegerStateStepWrapper<TData>(step, Steps.Count));
+            }
+
+            return this;
+        }
+
+        IStateMachineBuilder<TData> IStateMachineBuilderStepAdder<TData>.SetEndState(int state)
+        {
+            SetEndState(state);
+
+            return this;
         }
     }
 
-    public class StateMachineBuilder<TState, TData> : IStateMachineBuilderAddStep<TState, TData>, IStateMachineBuilder<TState, TData>
+    internal class StateMachineBuilder<TState, TData> :
+        IStateMachineBuilderStepAdder<TState, TData>,
+        IStateMachineBuilder<TState, TData>
     {
-        private readonly List<IStateMachineStep<TState, TData>> _steps = new List<IStateMachineStep<TState, TData>>();
+        protected readonly List<IStateMachineStep<TState, TData>> Steps = new List<IStateMachineStep<TState, TData>>();
 
-        public IStateMachineBuilderAddStep<TState, TData> AddStep<TStep>(TStep step) where TStep : class, IStateMachineStep<TState, TData>
+        public IStateMachineBuilderStepAdder<TState, TData> AddStep<TStep>(TStep step) where TStep : class, IStateMachineStep<TState, TData>
         {
-            _steps.Add(step);
+            Steps.Add(step);
 
             return this;
         }
 
-        public IStateMachineBuilderAddStep<TState, TData> AddSteps<TStep>(IEnumerable<TStep> steps) where TStep : class, IStateMachineStep<TState, TData>
+        public IStateMachineBuilderStepAdder<TState, TData> AddSteps<TStep>(IEnumerable<TStep> steps) where TStep : class, IStateMachineStep<TState, TData>
         {
-            _steps.AddRange(steps);
+            Steps.AddRange(steps);
 
             return this;
-        }
-
-        public IStateMachine<TState, TData> Build(TState state, TData data)
-        {
-            return new StateMachine<TState, TData>(_steps, state, data);
         }
 
         public IStateMachineBuilder<TState, TData> SetEndState(TState state)
         {
-            _steps.Add(new EndStateStep<TState, TData>(state));
+            Steps.Add(new EndStateStep<TState, TData>(state));
 
             return this;
+        }
+
+        public virtual IStateMachine<TState, TData> Build(TState state, TData data)
+        {
+            if (!Steps.Any())
+            {
+                throw new MissingStepException();
+            }
+
+            if (!Steps.OfType<EndStateStep<TState, TData>>().Any())
+            {
+                throw new MissingEndStateException(nameof(EndStateStep<TState, TData>));
+            }
+
+            return new StateMachine<TState, TData>(Steps, state, data);
         }
     }
 }

@@ -31,7 +31,7 @@ namespace StateMachines
         {
             if (TryMoveToState())
             {
-                if (await _steps.Current.ExecuteAsync(Data))
+                if (await _steps.Current.ExecuteAsync(Data, cancellationToken))
                 {
                     if (_steps.MoveNext())
                     {

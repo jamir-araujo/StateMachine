@@ -130,7 +130,6 @@ namespace StateMachines.Tests
 
             Assert.True(await machine.MoveNextAsync());
             Assert.True(await machine.MoveNextAsync());
-            Assert.True(await machine.MoveNextAsync());
             Assert.False(await machine.MoveNextAsync());
 
             //finished
@@ -168,54 +167,10 @@ namespace StateMachines.Tests
 
             Assert.True(await newMachine.MoveNextAsync());
             Assert.True(await newMachine.MoveNextAsync());
-            Assert.True(await newMachine.MoveNextAsync());
             Assert.False(await newMachine.MoveNextAsync());
 
             Assert.False(await newMachine.MoveNextAsync());
             Assert.False(await newMachine.MoveNextAsync());
-        }
-
-        [Fact]
-        public async Task NewStateMachine_Should_NotExecuteSteps_When_StartsWithLastStepCompeleted()
-        {
-            var steps = new List<IStateMachineStep<int, DummyData>>
-            {
-                new SettableStep(0, true),
-                new SettableStep(1, true),
-                new SettableStep(2, true),
-                new SettableStep(3, true),
-                new SettableStep(4, true)
-            };
-
-            var data = new DummyData();
-
-            var machine = new StateMachine<int, DummyData>(steps, 0, data);
-
-            Assert.True(await machine.MoveNextAsync());
-            Assert.True(await machine.MoveNextAsync());
-            Assert.True(await machine.MoveNextAsync());
-            Assert.True(await machine.MoveNextAsync());
-            Assert.True(await machine.MoveNextAsync());
-            Assert.False(await machine.MoveNextAsync());
-
-            var stepMock = new Mock<IStateMachineStep<int, DummyData>>();
-
-            stepMock
-                .Setup(s => s.ExecuteAsync(data, default))
-                .ReturnsAsync(true);
-
-            stepMock
-                .Setup(s => s.State)
-                .Returns(4);
-
-            var state = machine.State;
-            steps[4] = stepMock.Object;
-
-            var newMachine = new StateMachine<int, DummyData>(steps, state, data);
-
-            Assert.False(await newMachine.MoveNextAsync());
-
-            stepMock.Verify(s => s.ExecuteAsync(data, default), Times.Never);
         }
 
         public class SettableStep : IStateMachineStep<int, DummyData>

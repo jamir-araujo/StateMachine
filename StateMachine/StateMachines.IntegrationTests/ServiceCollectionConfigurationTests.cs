@@ -33,6 +33,10 @@ namespace StateMachines.IntegratedTests
             Assert.False(await stateMachine.MoveNextAsync());
             Assert.False(await stateMachine.MoveNextAsync());
             Assert.Equal(1, state.StepCount);
+
+            StateMachineBuilder.Create<DummyState>()
+                .SetEndState(1)
+                .Build(new DummyState());
         }
 
         public class DummyState

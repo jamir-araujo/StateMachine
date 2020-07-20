@@ -8,7 +8,6 @@ namespace StateMachines
 {
     public interface IStateMachineFactory
     {
-        IStateMachine<int, TData> Create<TData>(string name, TData data);
         IStateMachine<int, TData> Create<TData>(string name, int state, TData data);
         IStateMachine<TState, TData> Create<TState, TData>(string name, TState state, TData data);
     }
@@ -20,11 +19,6 @@ namespace StateMachines
         public StateMachineFactory(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
-        }
-
-        public IStateMachine<int, TData> Create<TData>(string name, TData data)
-        {
-            return Create(name, 0, data);
         }
 
         public IStateMachine<int, TData> Create<TData>(string name, int state, TData data)
