@@ -6,6 +6,19 @@ using StateMachines.Exceptions;
 
 namespace StateMachines
 {
+    public class StateMachineBuilder
+    {
+        public static IStateMachineBuilderStepAdder<TState, TData> Create<TState, TData>()
+        {
+            return new StateMachineBuilder<TState, TData>();
+        }
+
+        public static IStateMachineBuilderStepAdder<TData> Create<TData>()
+        {
+            return new StateMachineBuilder<TData>();
+        }
+    }
+
     public interface IStateMachineBuilderStepAdder<TState, TData> : IStateMachineBuilderEndState<TState, TData>
     {
         IStateMachineBuilderStepAdder<TState, TData> AddStep<TStep>(TStep step) where TStep : class, IStateMachineStep<TState, TData>;
@@ -32,19 +45,6 @@ namespace StateMachines
     public interface IStateMachineBuilder<TData> : IStateMachineBuilder<int, TData>
     {
         IStateMachine<int, TData> Build(TData data);
-    }
-
-    public class StateMachineBuilder
-    {
-        public static IStateMachineBuilderStepAdder<TState, TData> Create<TState, TData>()
-        {
-            return new StateMachineBuilder<TState, TData>();
-        }
-
-        public static IStateMachineBuilderStepAdder<TData> Create<TData>()
-        {
-            return new StateMachineBuilder<TData>();
-        }
     }
 
     internal class StateMachineBuilder<TData> :
