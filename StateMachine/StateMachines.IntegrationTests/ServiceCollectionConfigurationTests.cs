@@ -38,6 +38,7 @@ namespace StateMachines.IntegratedTests
                 {
                     services.AddStateMachine<DummyState, DummyData>(stateMachine =>
                     {
+                        stateMachine.SetEndState(DummyState.Done);
                     });
                 })
                 .Build();

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 namespace StateMachines
 {
     internal class StateMachine<TState, TData> : IStateMachine<TState, TData>
+        where TState : struct
     {
         public StateMachine(IEnumerable<IStateMachineStep<TState, TData>> steps, TState state, TData data)
         {

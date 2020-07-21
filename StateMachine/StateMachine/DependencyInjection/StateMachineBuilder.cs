@@ -4,6 +4,7 @@ using StateMachines;
 namespace Microsoft.Extensions.DependencyInjection
 {
     internal class StateMachineBuilder<TState, TData> : IStateMachineBuilder<TState, TData>, IStateMachineBuilder<TData>
+        where TState : struct
     {
         public StateMachineBuilder(IServiceCollection services, string name)
         {

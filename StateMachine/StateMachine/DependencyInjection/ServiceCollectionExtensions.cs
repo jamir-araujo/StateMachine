@@ -31,20 +31,20 @@ namespace Microsoft.Extensions.DependencyInjection
             return service;
         }
 
-        public static IServiceCollection AddStateMachine<TStep, TState>(this IServiceCollection service, Action<IStateMachineBuilder<TStep, TState>> configure)
+        public static IServiceCollection AddStateMachine<TState, TData>(this IServiceCollection service, Action<IStateMachineBuilder<TState, TData>> configure) where TState : struct
         {
             service.AddStateMachines();
 
-            configure(new StateMachineBuilder<TStep, TState>(service, string.Empty));
+            configure(new StateMachineBuilder<TState, TData>(service, string.Empty));
 
             return service;
         }
 
-        public static IServiceCollection AddStateMachine<TStep, TState>(this IServiceCollection service, string name, Action<IStateMachineBuilder<TStep, TState>> configure)
+        public static IServiceCollection AddStateMachine<TState, TData>(this IServiceCollection service, string name, Action<IStateMachineBuilder<TState, TData>> configure) where TState : struct
         {
             service.AddStateMachines();
 
-            configure(new StateMachineBuilder<TStep, TState>(service, name));
+            configure(new StateMachineBuilder<TState, TData>(service, name));
 
             return service;
         }

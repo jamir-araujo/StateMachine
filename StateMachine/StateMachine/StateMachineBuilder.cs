@@ -8,7 +8,7 @@ namespace StateMachines
 {
     public class StateMachineBuilder
     {
-        public static IStateMachineBuilderStepAdder<TState, TData> Create<TState, TData>()
+        public static IStateMachineBuilderStepAdder<TState, TData> Create<TState, TData>() where TState : struct
         {
             return new StateMachineBuilder<TState, TData>();
         }
@@ -20,6 +20,7 @@ namespace StateMachines
     }
 
     public interface IStateMachineBuilderStepAdder<TState, TData> : IStateMachineBuilderEndState<TState, TData>
+        where TState : struct
     {
         IStateMachineBuilderStepAdder<TState, TData> AddStep<TStep>(TStep step) where TStep : class, IStateMachineStep<TState, TData>;
         IStateMachineBuilderStepAdder<TState, TData> AddSteps<TStep>(IEnumerable<TStep> steps) where TStep : class, IStateMachineStep<TState, TData>;
@@ -33,11 +34,13 @@ namespace StateMachines
     }
 
     public interface IStateMachineBuilderEndState<TState, TData>
+        where TState : struct
     {
         IStateMachineBuilder<TState, TData> SetEndState(TState state);
     }
 
     public interface IStateMachineBuilder<TState, TData>
+        where TState : struct
     {
         IStateMachine<TState, TData> Build(TState state, TData data);
     }
@@ -92,6 +95,7 @@ namespace StateMachines
     internal class StateMachineBuilder<TState, TData> :
         IStateMachineBuilderStepAdder<TState, TData>,
         IStateMachineBuilder<TState, TData>
+        where TState : struct
     {
         protected readonly List<IStateMachineStep<TState, TData>> Steps = new List<IStateMachineStep<TState, TData>>();
 
@@ -135,7 +139,7 @@ namespace StateMachines
 
             if (!Steps.OfType<EndStateStep<TState, TData>>().Any())
             {
-                throw new MissingEndStateException(nameof(EndStateStep<TState, TData>));
+                throw new MissingEndStateException(nameof(IStateMachine<TState, TData>));
             }
 
             return new StateMachine<TState, TData>(Steps, state, data);

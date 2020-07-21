@@ -18,6 +18,7 @@
         }
 
         public static IStateMachine<TState, TData> Create<TState, TData>(this IStateMachineFactory factory, TState state, TData data)
+            where TState : struct
         {
             return factory.Create(string.Empty, state, data);
         }

@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace StateMachines
 {
-    public interface IStateMachine<TState, TData>
+    public interface IStateMachine<TState, TData> where TState : struct
     {
         TState State { get; }
         TData Data { get; }
