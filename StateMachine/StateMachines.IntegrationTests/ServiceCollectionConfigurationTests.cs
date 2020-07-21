@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
+using StateMachines.Exceptions;
+
 using Xunit;
 
 namespace StateMachines.IntegratedTests
@@ -12,37 +14,83 @@ namespace StateMachines.IntegratedTests
     public class ServiceCollectionConfigurationTests
     {
         [Fact]
-        public async Task AddStateMachine_Should_Provider()
+        public void Factory_Should_ThrowMissingStepException_When_StateMachineDoesNotHaveAnyStep()
         {
             var host = Host.CreateDefaultBuilder()
                 .ConfigureServices(services =>
                 {
-                    services.AddStateMachine<DummyState>(stateMachine =>
+                    services.AddStateMachine<DummyData>(stateMachine =>
                     {
-                        stateMachine.AddStep<CounterStep>();
                     });
                 })
                 .Build();
 
             var factory = host.Services.GetService<IStateMachineFactory>();
 
-            var state = new DummyState();
-            var stateMachine = factory.Create(string.Empty, state);
-
-            Assert.True(await stateMachine.MoveNextAsync());
-            Assert.False(await stateMachine.MoveNextAsync());
-            Assert.False(await stateMachine.MoveNextAsync());
-            Assert.Equal(1, state.StepCount);
+            Assert.Throws<MissingStepException>(() => factory.Create(string.Empty, 0, new DummyData()));
         }
 
-        public class DummyState
+        [Fact]
+        public void FactoryWithState_ShouldMissingStepException_Throw_When_StateMachineDoesNotHaveAnyStep()
+        {
+            var host = Host.CreateDefaultBuilder()
+                .ConfigureServices(services =>
+                {
+                    services.AddStateMachine<DummyState, DummyData>(stateMachine =>
+                    {
+                    });
+                })
+                .Build();
+
+            var factory = host.Services.GetService<IStateMachineFactory>();
+
+            Assert.Throws<MissingStepException>(() => factory.Create(string.Empty, DummyState.Start, new DummyData()));
+        }
+
+        [Fact]
+        public void FactoryWithState_ShouldMissingEndStateException_Throw_When_StateMachineDoesNotHaveAnyStep()
+        {
+            var host = Host.CreateDefaultBuilder()
+                .ConfigureServices(services =>
+                {
+                    services.AddStateMachine<DummyState, DummyData>(stateMachine =>
+                    {
+                        stateMachine.AddStep<CounterStepWithState>();
+                    });
+                })
+                .Build();
+
+            var factory = host.Services.GetService<IStateMachineFactory>();
+
+            Assert.Throws<MissingEndStateException>(() => factory.Create(string.Empty, DummyState.Start, new DummyData()));
+        }
+
+        public class DummyData
         {
             public int StepCount { get; set; }
         }
 
-        public class CounterStep : IStateMachineStep<DummyState>
+        public enum DummyState
         {
-            public Task<bool> ExecuteAsync(DummyState data, CancellationToken cancellationToken = default)
+            Start,
+            Middle,
+            Done
+        }
+
+        public class CounterStep : IStateMachineStep<DummyData>
+        {
+            public Task<bool> ExecuteAsync(DummyData data, CancellationToken cancellationToken = default)
+            {
+                data.StepCount += 1;
+                return Task.FromResult(true);
+            }
+        }
+
+        public class CounterStepWithState : IStateMachineStep<DummyState, DummyData>
+        {
+            public DummyState State => DummyState.Start;
+
+            public Task<bool> ExecuteAsync(DummyData data, CancellationToken cancellationToken = default)
             {
                 data.StepCount += 1;
                 return Task.FromResult(true);

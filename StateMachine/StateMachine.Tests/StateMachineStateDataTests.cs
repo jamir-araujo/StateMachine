@@ -1,10 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+
 using Moq;
+
 using Xunit;
 
 namespace StateMachines.Tests
@@ -107,11 +107,11 @@ namespace StateMachines.Tests
             var falseStep = new SettableStep(2, false);
             var steps = new List<IStateMachineStep<int, DummyData>>
             {
-                new SettableStep(0,true),
+                new SettableStep(0, true),
                 new SettableStep(1, true),
                 falseStep,
-                new SettableStep(3,true),
-                new SettableStep(4,true)
+                new SettableStep(3, true),
+                new SettableStep(4, true)
             };
 
             var state = new DummyData();
@@ -146,11 +146,11 @@ namespace StateMachines.Tests
             var falseStep = new SettableStep(2, false);
             var steps = new List<IStateMachineStep<int, DummyData>>
             {
-                new SettableStep(0,true),
+                new SettableStep(0, true),
                 new SettableStep(1, true),
                 falseStep,
-                new SettableStep(3,true),
-                new SettableStep(4,true)
+                new SettableStep(3, true),
+                new SettableStep(4, true)
             };
 
             var data = new DummyData();
@@ -171,6 +171,53 @@ namespace StateMachines.Tests
 
             Assert.False(await newMachine.MoveNextAsync());
             Assert.False(await newMachine.MoveNextAsync());
+        }
+
+        [Fact]
+        public async Task MoveNextAsync_Should_ChangeStateProperty_When_StepIsSuccessful()
+        {
+            var steps = new List<IStateMachineStep<int, DummyData>>
+            {
+                new SettableStep(0, true),
+                new SettableStep(1, true),
+                new SettableStep(2, true),
+                new SettableStep(3, true),
+                new SettableStep(4, true)
+            };
+
+            var data = new DummyData();
+            var machine = new StateMachine<int, DummyData>(steps, 0, data);
+
+            Assert.Equal(0, machine.State);
+            Assert.True(await machine.MoveNextAsync());
+            Assert.Equal(1, machine.State);
+            Assert.True(await machine.MoveNextAsync());
+            Assert.Equal(2, machine.State);
+            Assert.True(await machine.MoveNextAsync());
+            Assert.Equal(3, machine.State);
+            Assert.True(await machine.MoveNextAsync());
+            Assert.Equal(4, machine.State);
+            Assert.False(await machine.MoveNextAsync());
+        }
+
+        [Fact]
+        public async Task MoveNextAsync_Should_NotChangeStateProperty_When_StepIsNotSuccessful()
+        {
+            var steps = new List<IStateMachineStep<int, DummyData>>
+            {
+                new SettableStep(0, false),
+                new SettableStep(1, true)
+            };
+
+            var data = new DummyData();
+            var machine = new StateMachine<int, DummyData>(steps, 0, data);
+
+            Assert.Equal(0, machine.State);
+            Assert.False(await machine.MoveNextAsync());
+            Assert.Equal(0, machine.State);
+            Assert.False(await machine.MoveNextAsync());
+            Assert.Equal(0, machine.State);
+            Assert.False(await machine.MoveNextAsync());
         }
 
         public class SettableStep : IStateMachineStep<int, DummyData>

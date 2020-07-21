@@ -17,8 +17,7 @@ namespace StateMachines
 
         public IStateMachine<int, TData> Create<TData>(string name, int state, TData data)
         {
-            var optionsMonitor = _serviceProvider
-                .GetRequiredService<IOptionsMonitor<StateMachineOptions<int, TData>>>();
+            var optionsMonitor = _serviceProvider.GetRequiredService<IOptionsMonitor<StateMachineOptions<int, TData>>>();
 
             var options = optionsMonitor.Get(name);
 
@@ -33,8 +32,7 @@ namespace StateMachines
 
         public IStateMachine<TState, TData> Create<TState, TData>(string name, TState state, TData data)
         {
-            var optionsMonitor = _serviceProvider
-                .GetRequiredService<IOptionsMonitor<StateMachineOptions<TState, TData>>>();
+            var optionsMonitor = _serviceProvider.GetRequiredService<IOptionsMonitor<StateMachineOptions<TState, TData>>>();
 
             var options = optionsMonitor.Get(name);
 

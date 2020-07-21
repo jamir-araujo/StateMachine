@@ -25,11 +25,11 @@ namespace StateMachines
         IStateMachineBuilderStepAdder<TState, TData> AddSteps<TStep>(IEnumerable<TStep> steps) where TStep : class, IStateMachineStep<TState, TData>;
     }
 
-    public interface IStateMachineBuilderStepAdder<TData> : IStateMachineBuilder<TData>
+    public interface IStateMachineBuilderStepAdder<TData> : IStateMachineBuilder<int, TData>
     {
         IStateMachineBuilderStepAdder<TData> AddStep<TStep>(TStep step) where TStep : class, IStateMachineStep<TData>;
         IStateMachineBuilderStepAdder<TData> AddSteps<TStep>(IEnumerable<TStep> steps) where TStep : class, IStateMachineStep<TData>;
-        IStateMachineBuilder<TData> SetEndState(int state);
+        IStateMachineBuilder<int, TData> SetEndState(int state);
     }
 
     public interface IStateMachineBuilderEndState<TState, TData>
@@ -42,21 +42,10 @@ namespace StateMachines
         IStateMachine<TState, TData> Build(TState state, TData data);
     }
 
-    public interface IStateMachineBuilder<TData> : IStateMachineBuilder<int, TData>
-    {
-        IStateMachine<int, TData> Build(TData data);
-    }
-
     internal class StateMachineBuilder<TData> :
         StateMachineBuilder<int, TData>,
-        IStateMachineBuilder<TData>,
         IStateMachineBuilderStepAdder<TData>
     {
-        public IStateMachine<int, TData> Build(TData data)
-        {
-            return Build(0, data);
-        }
-
         public override IStateMachine<int, TData> Build(int state, TData data)
         {
             if (!Steps.Any())
@@ -74,6 +63,11 @@ namespace StateMachines
 
         IStateMachineBuilderStepAdder<TData> IStateMachineBuilderStepAdder<TData>.AddStep<TStep>(TStep step)
         {
+            if (step is null)
+            {
+                throw new ArgumentNullException(nameof(step));
+            }
+
             Steps.Add(new IntegerStateStepWrapper<TData>(step, Steps.Count));
 
             return this;
@@ -81,17 +75,15 @@ namespace StateMachines
 
         IStateMachineBuilderStepAdder<TData> IStateMachineBuilderStepAdder<TData>.AddSteps<TStep>(IEnumerable<TStep> steps)
         {
+            if (steps is null)
+            {
+                throw new ArgumentNullException(nameof(steps));
+            }
+
             foreach (var step in steps)
             {
                 Steps.Add(new IntegerStateStepWrapper<TData>(step, Steps.Count));
             }
-
-            return this;
-        }
-
-        IStateMachineBuilder<TData> IStateMachineBuilderStepAdder<TData>.SetEndState(int state)
-        {
-            SetEndState(state);
 
             return this;
         }
@@ -103,15 +95,25 @@ namespace StateMachines
     {
         protected readonly List<IStateMachineStep<TState, TData>> Steps = new List<IStateMachineStep<TState, TData>>();
 
-        public IStateMachineBuilderStepAdder<TState, TData> AddStep<TStep>(TStep step) where TStep : class, IStateMachineStep<TState, TData>
+        IStateMachineBuilderStepAdder<TState, TData> IStateMachineBuilderStepAdder<TState, TData>.AddStep<TStep>(TStep step)
         {
+            if (step is null)
+            {
+                throw new ArgumentNullException(nameof(step));
+            }
+
             Steps.Add(step);
 
             return this;
         }
 
-        public IStateMachineBuilderStepAdder<TState, TData> AddSteps<TStep>(IEnumerable<TStep> steps) where TStep : class, IStateMachineStep<TState, TData>
+        IStateMachineBuilderStepAdder<TState, TData> IStateMachineBuilderStepAdder<TState, TData>.AddSteps<TStep>(IEnumerable<TStep> steps)
         {
+            if (steps is null)
+            {
+                throw new ArgumentNullException(nameof(steps));
+            }
+
             Steps.AddRange(steps);
 
             return this;
@@ -126,7 +128,7 @@ namespace StateMachines
 
         public virtual IStateMachine<TState, TData> Build(TState state, TData data)
         {
-            if (!Steps.Any())
+            if (!Steps.Any(s => !(s is EndStateStep<TState, TData>)))
             {
                 throw new MissingStepException();
             }
