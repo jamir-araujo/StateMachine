@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+
 using StateMachines;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -13,40 +14,40 @@ namespace Microsoft.Extensions.DependencyInjection
             return services;
         }
 
-        public static IServiceCollection AddStateMachine<TData>(this IServiceCollection service, Action<IStateMachineBuilder<TData>> configure)
+        public static IServiceCollection AddStateMachine<TData>(this IServiceCollection services, Action<IStateMachineBuilder<TData>> configure)
         {
-            service.AddStateMachines();
+            services.AddStateMachines();
 
-            configure(new StateMachineBuilder<int, TData>(service, string.Empty));
+            configure(new StateMachineBuilder<int, TData>(services, Options.Options.DefaultName));
 
-            return service;
+            return services;
         }
 
-        public static IServiceCollection AddStateMachine<TData>(this IServiceCollection service, string name, Action<IStateMachineBuilder<TData>> configure)
+        public static IServiceCollection AddStateMachine<TData>(this IServiceCollection services, string name, Action<IStateMachineBuilder<TData>> configure)
         {
-            service.AddStateMachines();
+            services.AddStateMachines();
 
-            configure(new StateMachineBuilder<int, TData>(service, name));
+            configure(new StateMachineBuilder<int, TData>(services, name));
 
-            return service;
+            return services;
         }
 
-        public static IServiceCollection AddStateMachine<TState, TData>(this IServiceCollection service, Action<IStateMachineBuilder<TState, TData>> configure) where TState : struct
+        public static IServiceCollection AddStateMachine<TState, TData>(this IServiceCollection services, Action<IStateMachineBuilder<TState, TData>> configure) where TState : struct
         {
-            service.AddStateMachines();
+            services.AddStateMachines();
 
-            configure(new StateMachineBuilder<TState, TData>(service, string.Empty));
+            configure(new StateMachineBuilder<TState, TData>(services, Options.Options.DefaultName));
 
-            return service;
+            return services;
         }
 
-        public static IServiceCollection AddStateMachine<TState, TData>(this IServiceCollection service, string name, Action<IStateMachineBuilder<TState, TData>> configure) where TState : struct
+        public static IServiceCollection AddStateMachine<TState, TData>(this IServiceCollection services, string name, Action<IStateMachineBuilder<TState, TData>> configure) where TState : struct
         {
-            service.AddStateMachines();
+            services.AddStateMachines();
 
-            configure(new StateMachineBuilder<TState, TData>(service, name));
+            configure(new StateMachineBuilder<TState, TData>(services, name));
 
-            return service;
+            return services;
         }
     }
 }

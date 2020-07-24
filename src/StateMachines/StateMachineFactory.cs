@@ -24,7 +24,7 @@ namespace StateMachines
             var options = optionsMonitor.Get(name);
 
             var steps = options.Steps
-                .Select(stepType => _serviceProvider.GetRequiredService(stepType))
+                .Select(descriptor => descriptor.GetInstance(_serviceProvider))
                 .Cast<IStateMachineStep<TData>>();
 
             return StateMachineBuilder.Create<TData>()
@@ -39,12 +39,12 @@ namespace StateMachines
             var options = optionsMonitor.Get(name);
 
             var steps = options.Steps
-                .Select(stepType => _serviceProvider.GetRequiredService(stepType))
+                .Select(descriptor => descriptor.GetInstance(_serviceProvider))
                 .Cast<IStateMachineStep<TState, TData>>();
 
             if (!options.EndState.HasValue)
             {
-                throw new MissingEndStateException(nameof(IStateMachine<TState, TData>));
+                throw new MissingEndStateException(typeof(IStateMachine<TState, TData>).ToString());
             }
 
             return StateMachineBuilder.Create<TState, TData>()
