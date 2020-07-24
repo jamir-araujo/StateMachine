@@ -15,7 +15,7 @@ namespace Microsoft.Extensions.DependencyInjection
         public IServiceCollection Services { get; }
         public string Name { get; }
 
-        IStateMachineBuilder<TState, TData> IStateMachineBuilder<TState, TData>.AddStep<TImplementation>(ServiceLifetime lifetime = ServiceLifetime.Scoped)
+        IStateMachineBuilder<TState, TData> IStateMachineBuilder<TState, TData>.AddStep<TImplementation>(ServiceLifetime lifetime)
         {
             Services.Add(ServiceDescriptor.Describe(typeof(TImplementation), typeof(TImplementation), lifetime));
 
@@ -26,9 +26,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
         IStateMachineBuilder<TState, TData> IStateMachineBuilder<TState, TData>.AddStep<TImplementation>(TImplementation step)
         {
-            Services.AddSingleton(step);
-
-            AddStep<TImplementation>();
+            AddStep(step);
 
             return this;
         }
@@ -58,11 +56,14 @@ namespace Microsoft.Extensions.DependencyInjection
 
         IStateMachineBuilder<TData> IStateMachineBuilder<TData>.AddStep<TImplementation>(TImplementation step)
         {
-            Services.AddSingleton(step);
-
-            AddStep<TImplementation>();
+            AddStep(step);
 
             return this;
+        }
+
+        private void AddStep<TImplementation>(TImplementation step)
+        {
+            Services.Configure<StateMachineOptions<TState, TData>>(Name, o => o.AddStep(step));
         }
 
         private void AddStep<TImplementation>()
