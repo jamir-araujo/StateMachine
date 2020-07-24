@@ -268,6 +268,40 @@ namespace StateMachines.IntegratedTests
             Assert.Equal(15, data2.Value);
         }
 
+        [Fact]
+        public async Task EmptyNameStateMachine_Should_NotGetStepsOfNamedStateMachine()
+        {
+            var host = Host.CreateDefaultBuilder()
+                .ConfigureServices(services =>
+                {
+                    services.AddStateMachine<DummyData>("1", stateMachine =>
+                    {
+                        stateMachine
+                            .AddStep<CounterStep>()
+                            .AddStep<CounterStep>()
+                            .AddStep<CounterStep>();
+                    });
+
+                    services.AddStateMachine<DummyData>(stateMachine =>
+                    {
+                        stateMachine
+                            .AddStep<CounterStep>()
+                            .AddStep<CounterStep>()
+                            .AddStep<CounterStep>();
+                    });
+                })
+                .Build();
+
+            var factory = host.Services.GetService<IStateMachineFactory>();
+
+            var data = new DummyData();
+            var machine = factory.Create(data);
+
+            while (await machine.MoveNextAsync()) { }
+
+            Assert.Equal(3, data.Value);
+        }
+
         public class DummyData
         {
             public int Value { get; set; }
