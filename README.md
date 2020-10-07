@@ -71,3 +71,47 @@ public class CounterStep1 : IStateMachineStep<DummyData>
     }
 }
 ```
+
+## Using with AspNet Core
+
+Configure a StateMachine:
+
+```csharp
+public class Startup
+{
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddStateMachine<DummyData>(stateMachine =>
+        {
+            stateMachine
+                .AddStep<CounterStep1>()
+                .AddStep<CounterStep2>()
+                .AddStep<CounterStep3>()
+                .AddStep<CounterStep4>();
+        });
+    }
+}
+```
+
+Then request it with the `IStateMachineFactory`:
+```csharp
+public class MyService
+{
+    //...
+    public MyService(IStateMachineFactory factory)
+    {
+        _factory = factory;
+    }
+    
+    public async Task ExecuteProcessAsync(DymmyData Data)
+    {
+        var machine = _factory.Create(data);
+        
+        while (await machine.MoveNextAsync())
+        {
+            //...
+        }
+    }
+}
+```
+
