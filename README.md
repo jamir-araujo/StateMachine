@@ -54,7 +54,7 @@ while (await machine.MoveNextAsync())
 }
 ```
 
-The builder can builde two types of state machine, int state StateMachines, and general struc state machine (usually used for enums).
+The builder can builde two types of state machine, int state StateMachines, and general struct StateMachine (usually for enums).
 
 The last example usend a int state StateMachine.
 
@@ -72,7 +72,42 @@ public class CounterStep1 : IStateMachineStep<DummyData>
 }
 ```
 
-## Using with AspNet Core
+With the struct StateMachine, you can use any stuct as the state for the StateMachine.
+
+For example:
+```csharp
+public enum ProcessState { Start, Step1, Done }
+
+public class StartStep : IStateMachineStep<ProcessState, DummyData>
+{
+    public ProcessState State => ProcessState.Start;
+
+    public Task<bool> ExecuteAsync(DummyData data, CancellationToken cancellationToken = default)
+    {
+        data.StepCount += 1;
+        return Task.FromResult(true);
+    }
+}
+```
+
+End you build like this:
+
+```csharp
+var machine = StateMachineBuilder.Create<ProcessState, DummyData>()
+      .AddStep(new StartStep())
+      .AddStep(new Step1())
+      .SetEndState(ProcessState.Done)
+      .Build(ProcessState.Start, dummy);
+
+// moves until the end or one step returns false.
+while (await machine.MoveNextAsync())
+{
+    //...
+}
+```
+
+
+## Using with ASP.NET Core
 
 Configure a StateMachine:
 
