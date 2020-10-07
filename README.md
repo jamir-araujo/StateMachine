@@ -1,6 +1,6 @@
 # StateMachines
 
-A simple, staight forward state machine, for simple, linear processes.
+A simple, linear state machine, for simple, linear processes.
 
 ## How it works
 
