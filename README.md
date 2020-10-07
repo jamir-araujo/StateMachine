@@ -106,6 +106,8 @@ while (await machine.MoveNextAsync())
 }
 ```
 
+Note the `SetEndState` method. When you are using this type os StateMachines, you need to inform which is the end state.
+
 
 ## Using with ASP.NET Core
 
