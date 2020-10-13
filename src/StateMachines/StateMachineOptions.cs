@@ -14,14 +14,10 @@ namespace StateMachines
         public TState? EndState => _endStepDescriptor?.State;
 
         internal void AddStep(StepDescriptor<TState, TData> descriptor)
-        {
-            _steps.Add(descriptor);
-        }
+            => _steps.Add(descriptor);
 
         internal void SetEndStep(TState state)
-        {
-            _endStepDescriptor = new EndStepDescriptor<TState, TData>(state);
-        }
+            => _endStepDescriptor = new EndStepDescriptor<TState, TData>(state);
 
         internal IEnumerable<IStateMachineStep<TState, TData>> GetSteps(IServiceProvider serviceProvider)
         {

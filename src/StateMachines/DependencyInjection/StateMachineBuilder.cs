@@ -55,9 +55,7 @@ namespace Microsoft.Extensions.DependencyInjection
         }
 
         private void Configure(Action<StateMachineOptions<TState, TData>> configure)
-        {
-            Services.Configure(Name, configure);
-        }
+            => Services.Configure(Name, configure);
     }
 
     internal class StateMachineBuilder<TData> : StateMachineBuilderBase<int, TData>, IStateMachineBuilder<TData>
@@ -99,8 +97,6 @@ namespace Microsoft.Extensions.DependencyInjection
         }
 
         private void Configure(Action<StateMachineOptions<int, TData>> configure)
-        {
-            Services.Configure(Name, configure);
-        }
+            => Services.Configure(Name, configure);
     }
 }

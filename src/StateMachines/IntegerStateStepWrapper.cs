@@ -17,8 +17,6 @@ namespace StateMachines
         public int State { get; }
 
         public Task<bool> ExecuteAsync(TData data, CancellationToken cancellationToken = default)
-        {
-            return _step.ExecuteAsync(data, cancellationToken);
-        }
+            => _step.ExecuteAsync(data, cancellationToken);
     }
 }

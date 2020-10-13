@@ -43,9 +43,7 @@ namespace StateMachines
             : this(state) => _instance = instance;
 
         public override IStateMachineStep<int, TData> GetStep(IServiceProvider serviceProvider)
-        {
-            return new IntegerStateStepWrapper<TData>(GetStateInternal(serviceProvider), _state);
-        }
+            => new IntegerStateStepWrapper<TData>(GetStateInternal(serviceProvider), _state);
 
         private IStateMachineStep<TData> GetStateInternal(IServiceProvider serviceProvider)
         {
@@ -66,8 +64,6 @@ namespace StateMachines
         public TState State { get; }
 
         public override IStateMachineStep<TState, TData> GetStep(IServiceProvider serviceProvider)
-        {
-            return new EndStateStep<TState, TData>(State);
-        }
+            => new EndStateStep<TState, TData>(State);
     }
 }
