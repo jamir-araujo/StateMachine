@@ -1,50 +1,38 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace StateMachines
 {
     public class StateMachineOptions<TState, TData>
         where TState : struct
     {
-        private readonly List<StepDescriptor> _steps = new List<StepDescriptor>();
+        private readonly List<StepDescriptor<TState, TData>> _steps = new List<StepDescriptor<TState, TData>>();
+        private EndStepDescriptor<TState, TData> _endStepDescriptor;
 
-        public IReadOnlyCollection<StepDescriptor> Steps => _steps;
-        public TState? EndState { get; set; }
+        public IReadOnlyCollection<StepDescriptor<TState, TData>> Steps => _steps;
+        public TState? EndState => _endStepDescriptor?.State;
 
-        public void AddStep<TImplementation>()
+        internal void AddStep(StepDescriptor<TState, TData> descriptor)
         {
-            _steps.Add(new StepDescriptor(typeof(TImplementation)));
+            _steps.Add(descriptor);
         }
 
-        public void AddStep<TImplementation>(TImplementation step)
+        internal void SetEndStep(TState state)
         {
-            _steps.Add(new StepDescriptor(step));
-        }
-    }
-
-    public class StepDescriptor
-    {
-        public Type ServiceType { get; set; }
-        public object ImplementationInstance { get; set; }
-
-        public StepDescriptor(Type serviceType)
-        {
-            ServiceType = serviceType;
+            _endStepDescriptor = new EndStepDescriptor<TState, TData>(state);
         }
 
-        public StepDescriptor(object implementationInstance)
+        internal IEnumerable<IStateMachineStep<TState, TData>> GetSteps(IServiceProvider serviceProvider)
         {
-            ImplementationInstance = implementationInstance;
-        }
+            var steps = _steps.AsEnumerable();
 
-        public object GetInstance(IServiceProvider serviceProvider)
-        {
-            if (!(ImplementationInstance is null))
+            if (_endStepDescriptor != null)
             {
-                return ImplementationInstance;
+                steps = steps.Concat(new[] { _endStepDescriptor });
             }
 
-            return serviceProvider.GetService(ServiceType);
+            return steps.Select(descriptor => descriptor.GetStep(serviceProvider));
         }
     }
 }

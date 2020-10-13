@@ -9,6 +9,7 @@ namespace StateMachines
     }
 
     public interface IStateMachineStep<TState, TData> : IStateMachineStep<TData>
+        where TState : struct
     {
         TState State { get; }
     }

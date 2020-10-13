@@ -19,6 +19,11 @@ namespace StateMachines
             return factory.Create(Options.DefaultName, state, data);
         }
 
+        public static IStateMachine<int, TData> Create<TData>(this IStateMachineFactory factory, string name, int state, TData data)
+        {
+            return factory.Create(name, state, data);
+        }
+
         public static IStateMachine<TState, TData> Create<TState, TData>(this IStateMachineFactory factory, TState state, TData data)
             where TState : struct
         {

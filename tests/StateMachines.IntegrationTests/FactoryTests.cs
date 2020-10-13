@@ -15,7 +15,7 @@ namespace StateMachines.IntegratedTests
     public class FactoryTests
     {
         [Fact]
-        public void Factory_Should_ThrowMissingStepException_When_StateMachineDoesNotHaveAnyStep()
+        public void Factory_Should_ThrowOptionsValidationException_When_StateMachineDoesNotHaveAnyStep()
         {
             var host = Host.CreateDefaultBuilder()
                 .ConfigureServices(services =>
@@ -28,11 +28,11 @@ namespace StateMachines.IntegratedTests
 
             var factory = host.Services.GetService<IStateMachineFactory>();
 
-            Assert.Throws<MissingStepException>(() => factory.Create(string.Empty, 0, new DummyData()));
+            Assert.Throws<OptionsValidationException>(() => factory.Create(string.Empty, 0, new DummyData()));
         }
 
         [Fact]
-        public void FactoryWithState_ShouldMissingStepException_Throw_When_StateMachineDoesNotHaveAnyStep()
+        public void FactoryWithState_ShouldOptionsValidationException_Throw_When_StateMachineDoesNotHaveAnyStep()
         {
             var host = Host.CreateDefaultBuilder()
                 .ConfigureServices(services =>
@@ -46,11 +46,11 @@ namespace StateMachines.IntegratedTests
 
             var factory = host.Services.GetService<IStateMachineFactory>();
 
-            Assert.Throws<MissingStepException>(() => factory.Create(string.Empty, DummyState.Start, new DummyData()));
+            Assert.Throws<OptionsValidationException>(() => factory.Create(string.Empty, DummyState.Start, new DummyData()));
         }
 
         [Fact]
-        public void FactoryWithState_ShouldMissingEndStateException_Throw_When_StateMachineDoesNotHaveAnyStep()
+        public void FactoryWithState_Should_ThrowOptionsValidationException_When_StateMachineDoesNotHaveAnyStep()
         {
             var host = Host.CreateDefaultBuilder()
                 .ConfigureServices(services =>
@@ -64,7 +64,7 @@ namespace StateMachines.IntegratedTests
 
             var factory = host.Services.GetService<IStateMachineFactory>();
 
-            Assert.Throws<MissingEndStateException>(() => factory.Create(string.Empty, DummyState.Start, new DummyData()));
+            Assert.Throws<OptionsValidationException>(() => factory.Create(string.Empty, DummyState.Start, new DummyData()));
         }
 
         [Fact]
@@ -300,6 +300,58 @@ namespace StateMachines.IntegratedTests
             while (await machine.MoveNextAsync()) { }
 
             Assert.Equal(3, data.Value);
+        }
+
+        [Fact]
+        public async Task StateMachineFactory_Should_AddTheEndStep()
+        {
+            var factory = new ServiceCollection()
+                .AddStateMachine<DummyData>(stateMachine =>
+                {
+                    stateMachine.AddStep<CounterStep>();
+                })
+                .BuildServiceProvider()
+                .GetService<IStateMachineFactory>();
+
+            var data = new DummyData();
+            var machine = factory.Create(data);
+
+            while (await machine.MoveNextAsync()) { }
+
+            Assert.Equal(1, data.Value);
+
+            machine = factory.Create(machine.State, data);
+
+            Assert.False(await machine.MoveNextAsync());
+
+            Assert.Equal(1, data.Value);
+        }
+
+        [Fact]
+        public async Task StateMachineFactoryWithState_Should_AddTheEndStep()
+        {
+            var factory = new ServiceCollection()
+                .AddStateMachine<DummyState, DummyData>(stateMachine =>
+                {
+                    stateMachine.AddStep<StartStep>()
+                        .AddStep<MiddleStep>()
+                        .SetEndState(DummyState.Done);
+                })
+                .BuildServiceProvider()
+                .GetService<IStateMachineFactory>();
+
+            var data = new DummyData();
+            var machine = factory.Create(DummyState.Start, data);
+
+            while (await machine.MoveNextAsync()) { }
+
+            Assert.Equal(2, data.Value);
+
+            machine = factory.Create(machine.State, data);
+
+            Assert.False(await machine.MoveNextAsync());
+
+            Assert.Equal(2, data.Value);
         }
 
         public class DummyData

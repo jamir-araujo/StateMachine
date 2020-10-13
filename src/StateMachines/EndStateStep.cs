@@ -4,11 +4,9 @@ using System.Threading.Tasks;
 namespace StateMachines
 {
     internal class EndStateStep<TState, TData> : IStateMachineStep<TState, TData>
+        where TState : struct
     {
-        public EndStateStep(TState state)
-        {
-            State = state;
-        }
+        public EndStateStep(TState state) => State = state;
 
         public TState State { get; }
 

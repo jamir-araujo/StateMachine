@@ -1,4 +1,5 @@
 ﻿using System;
+
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 using StateMachines;
@@ -18,7 +19,7 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             services.AddStateMachines();
 
-            configure(new StateMachineBuilder<int, TData>(services, Options.Options.DefaultName));
+            configure(new StateMachineBuilder<TData>(services, Options.Options.DefaultName));
 
             return services;
         }
@@ -27,7 +28,7 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             services.AddStateMachines();
 
-            configure(new StateMachineBuilder<int, TData>(services, name));
+            configure(new StateMachineBuilder<TData>(services, name));
 
             return services;
         }
