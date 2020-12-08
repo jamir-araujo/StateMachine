@@ -15,11 +15,11 @@ public interface IStateMachine<TState, TData> where TState : struct
 }
 ```
 
-But won't have to implemente it.
+But you won't have to implemente it.
 
 A StateMachine is made of steps. Each time you call `MoveNextAsync` and it returns true, the StateMachine moves to the next step.
 
-And it's the steps that you'll have to implement.
+So it's the steps that you'll have to implement.
 
 Steps are defined by the interfaces `IStateMachineStep<TState, TData>` and `IStateMachineStep<TData>`. 
 
